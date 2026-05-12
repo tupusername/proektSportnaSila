@@ -1,101 +1,60 @@
 ﻿@model IEnumerable<SportnaSila.Models.Products>
 
-@{
-    ViewData["Title"] = "Продукти";
-}
-
-<section class="page-header">
-    <div class="container">
-        <h1>Нашите продукти</h1>
-        <p>Разгледай наличната спортна екипировка, аксесоари и предложения.</p>
-    </div>
-</section>
-
-<section class="pb-5">
-    <div class="container">
-
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-            @if (User.IsInRole("Admin"))
-            {
-                <a asp-action="Create" class="btn btn-main">
-                    Добави нов продукт
-                </a>
-            }
-        </div>
-
-        <div class="row g-4">
-            @foreach (var item in Model)
-            {
-                <div class="col-md-6 col-lg-4">
-
-                    <!-- ЦЯЛАТА КАРТА Е CLICKABLE -->
-                    <div class="product-card"
-                         onclick="window.location='@Url.Action("Details", "Products", new { id = item.Id })'">
-
-                        <img src="@(string.IsNullOrEmpty(item.ImgUrl) ? "https://via.placeholder.com/600x400?text=SportnaSila" : item.ImgUrl)"
-                             alt="@item.Name"
-                             class="product-image" />
-
-                        <div class="product-body">
-                            <h3 class="product-title">@item.Name</h3>
-
-                            <p class="product-description">
-                                @item.Description
-                            </p>
-
-                            <div class="product-meta">
-                                <strong>Количество:</strong> @item.Quantity
-                            </div>
-
-                            <div class="product-meta">
-                                <strong>Категория:</strong> @(item.Category != null ? item.Category.Name : "Няма")
-                            </div>
-
-                            <div class="product-meta">
-                                <strong>Марка:</strong> @(item.Brand != null ? item.Brand.BrandName : "Няма")
-                            </div>
-
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="product-price">@item.Price.ToString("0.00") €</span>
-
-                                <form asp-controller="Products"
-                                      asp-action="AddToCart"
-                                      method="post"
-                                      onclick="event.stopPropagation();">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <input type="hidden" name="productId" value="@item.Id" />
-
-                                    <button type="submit" class="btn btn-primary btn-sm">
-                                        Добави в количката
-                                    </button>
-                                </form>
-                            </div>
-
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <div class="admin-actions mt-3">
-                                    <a asp-action="Edit"
-                                       asp-route-id="@item.Id"
-                                       onclick="event.stopPropagation();">
-                                        Редакция
-                                    </a>
-
-                                    <a asp-action="Delete"
-                                       asp-route-id="@item.Id"
-                                       class="text-danger"
-                                       onclick="event.stopPropagation();">
-                                        Изтрий
-                                    </a>
-                                </div>
-                            }
+<div class="container py-5">
+    <h2 class="fw-bold mb-4">Нашите продукти</h2>
+    <div class="row g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 rounded-4 p-3">
+                    <img src="@item.ImgUrl" class="card-img-top rounded-3" style="height: 200px; object-fit: contain;">
+                    <div class="card-body">
+                        <h5 class="fw-bold">@item.Name</h5>
+                        <p class="text-muted small">@item.Description</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="h4 fw-bold text-primary mb-0">@item.Price.ToString("0.00") €</span>
+                            
+                            <button class="btn btn-primary add-to-cart-btn px-3" data-product-id="@item.Id">
+                                <i class="bi bi-cart-plus"></i> Добави
+                            </button>
                         </div>
                     </div>
-
                 </div>
-            }
-        </div>
-
+            </div>
+        }
     </div>
-</section>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.add-to-cart-btn').click(function () {
+                var btn = $(this);
+                var productId = btn.data('product-id');
+
+                btn.prop('disabled', true).text('...');
+
+                $.ajax({
+                    url: '/Orders/Create',
+                    type: 'POST',
+                    data: {
+                        productId: productId,
+                        quantity: 1,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        btn.text('✅').addClass('btn-success').removeClass('btn-primary');
+                        setTimeout(function() {
+                            btn.prop('disabled', false).html('<i class="bi bi-cart-plus"></i> Добави').addClass('btn-primary').removeClass('btn-success');
+                        }, 1500);
+                    },
+                    error: function () {
+                        alert('Грешка при добавянето.');
+                        btn.prop('disabled', false).text('Добави');
+                    }
+                });
+            });
+        });
+    </script>
+}

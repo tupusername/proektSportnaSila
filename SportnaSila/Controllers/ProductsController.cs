@@ -24,10 +24,19 @@ namespace SportnaSila.Controllers
         }
 
         // GET: Products
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? categoryId)
         {
-            var applicationDbContext = _context.Products.Include(p => p.Brand).Include(p => p.Category).Include(p => p.Supplier);
-            return View(await applicationDbContext.ToListAsync());
+            var products = _context.Products
+                .Include(p => p.Brand)
+                .Include(p => p.Category)
+                .AsQueryable();
+
+            if (categoryId.HasValue)
+            {
+                products = products.Where(p => p.CategoryId == categoryId);
+            }
+
+            return View(await products.ToListAsync());
         }
 
         // GET: Products/Details/5
@@ -41,8 +50,8 @@ namespace SportnaSila.Controllers
             var products = await _context.Products
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
-                .Include(p => p.Supplier)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (products == null)
             {
                 return NotFound();
@@ -57,18 +66,14 @@ namespace SportnaSila.Controllers
         {
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "BrandName");
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "Id", "Name");
             return View();
         }
 
         // POST: Products/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Description,ImgUrl,Price,Quantity,CategoryId,SupplierId,BrandId")] Products products)
+        public async Task<IActionResult> Create([Bind("Name,Description,ImgUrl,Price,Quantity,CategoryId,BrandId")] Products products)
         {
-
             if (ModelState.IsValid)
             {
                 _context.Add(products);
@@ -77,7 +82,6 @@ namespace SportnaSila.Controllers
             }
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "BrandName", products.BrandId);
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", products.CategoryId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "Id", "Name", products.SupplierId);
             return View(products);
         }
 
@@ -97,16 +101,13 @@ namespace SportnaSila.Controllers
             }
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "BrandName", products.BrandId);
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", products.CategoryId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "Id", "Name", products.SupplierId);
             return View(products);
         }
 
         // POST: Products/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,ImgUrl,Price,Quantity,CategoryId,SupplierId,BrandId")] Products products)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,ImgUrl,Price,Quantity,CategoryId,BrandId")] Products products)
         {
             if (id != products.Id)
             {
@@ -135,7 +136,6 @@ namespace SportnaSila.Controllers
             }
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "BrandName", products.BrandId);
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", products.CategoryId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "Id", "Name", products.SupplierId);
             return View(products);
         }
 
@@ -151,8 +151,8 @@ namespace SportnaSila.Controllers
             var products = await _context.Products
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
-                .Include(p => p.Supplier)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (products == null)
             {
                 return NotFound();
@@ -161,7 +161,6 @@ namespace SportnaSila.Controllers
             return View(products);
         }
 
-        // POST: Products/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -175,6 +174,7 @@ namespace SportnaSila.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToCart([FromForm] int productId)

@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿
+
+
+<!DOCTYPE html>
 <html lang="bg">
 <head>
     <meta charset="utf-8" />
@@ -28,6 +31,11 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Начало</a>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Categories" asp-action="Index">Каталог</a>
+                        </li>
+
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Products" asp-action="Index">Продукти</a>
                         </li>
@@ -37,9 +45,6 @@
                     </ul>
 
                     <div class="d-flex align-items-center gap-3">
-                       @*  <a class="nav-icon" href="#">
-                            <i class="bi bi-search"></i>
-                        </a> *@
                         <a class="nav-icon" href="/orders">
                             <i class="bi bi-cart3"></i>
                         </a>
@@ -50,7 +55,7 @@
         </nav>
     </header>
 
-    <main>
+    <main role="main">
         @RenderBody()
     </main>
 

@@ -10,6 +10,8 @@
 
         public Products Product { get; set; } 
         public Clients Client { get; set; }
-       
+
+        public string Status { get; set; } = "Cart";
+
     }
 }

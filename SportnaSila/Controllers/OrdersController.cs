@@ -5,179 +5,111 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SportnaSila.Data;
 using SportnaSila.Models;
 
-
 namespace SportnaSila.Controllers
-{[Authorize]
+{
+    [Authorize]
     public class OrdersController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Clients> _userManager;
 
-        public OrdersController(ApplicationDbContext context,UserManager<Clients>userManager)
+        public OrdersController(ApplicationDbContext context, UserManager<Clients> userManager)
         {
             _context = context;
             _userManager = userManager;
         }
 
-        // GET: Orders
+        // GET: Orders - Показва количката или админ панела
         public async Task<IActionResult> Index()
         {
-
             var userId = _userManager.GetUserId(User);
-            var orders = _context.Orders
-                .Include(o => o.Client)
-                .Include(o => o.Product)
-                .Where(o => o.Client.Id == userId);
+            var query = _context.Orders.Include(o => o.Product).Include(o => o.Client);
 
-            return View(await orders.ToListAsync());
-        }
-
-        // GET: Orders/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
+            if (User.IsInRole("Admin"))
             {
-                return NotFound();
+                // Админът вижда финализираните поръчки
+                var adminOrders = await query
+                    .Where(o => o.Status == "Completed")
+                    .OrderByDescending(o => o.DateOrder)
+                    .ToListAsync();
+                return View(adminOrders);
             }
-
-            var orders = await _context.Orders
-                .Include(o => o.Client)
-                .Include(o => o.Product)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (orders == null)
+            else
             {
-                return NotFound();
+                // КЛИЕНТ: Стакваме визуално (групираме еднаквите продукти в една карта)
+                var userCart = await query
+                    .Where(o => o.ClientId == userId && o.Status == "Cart")
+                    .GroupBy(o => o.ProductId)
+                    .Select(g => new Orders
+                    {
+                        Id = g.First().Id,
+                        ProductId = g.Key,
+                        ClientId = userId,
+                        Status = "Cart",
+                        Quantity = g.Sum(x => x.Quantity), // Тук става 1+1=2
+                        Product = g.First().Product,
+                        Client = g.First().Client
+                    })
+                    .ToListAsync();
+
+                return View(userCart);
             }
-
-            return View(orders);
         }
 
-        // GET: Orders/Create
-        public IActionResult Create()
-        {
-           // ViewData["ClientId"] = new SelectList(_context.Users, "Id", "Id");
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name");
-            return View();
-        }
-
-        // POST: Orders/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // AJAX POST: Добавяне в количка без презареждане
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ProductId,Quantity")] Orders orders)
+        public async Task<IActionResult> Create(int productId, int quantity = 1)
         {
-            orders.ClientId = _userManager.GetUserId(User);
-            orders.DateOrder = DateTime.Now;
-            if (ModelState.IsValid)
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Json(new { success = false, message = "Влезте в профила си." });
+
+            var existingOrder = await _context.Orders
+                .FirstOrDefaultAsync(o => o.ProductId == productId && o.ClientId == userId && o.Status == "Cart");
+
+            if (existingOrder != null)
             {
-                _context.Add(orders);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                existingOrder.Quantity += quantity;
+                _context.Update(existingOrder);
             }
-            //ViewData["ClientId"] = new SelectList(_context.Users, "Id", "Id", orders.ClientId);
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", orders.ProductId);
-            return View(orders);
+            else
+            {
+                _context.Add(new Orders { ProductId = productId, ClientId = userId, Quantity = quantity, Status = "Cart", DateOrder = DateTime.Now });
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
         }
 
-        // GET: Orders/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var orders = await _context.Orders.FindAsync(id);
-            if (orders == null)
-            {
-                return NotFound();
-            }
-            //ViewData["ClientId"] = new SelectList(_context.Users, "Id", "Id", orders.ClientId);
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", orders.ProductId);
-            return View(orders);
-        }
-
-        // POST: Orders/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Админът завършва и премахва поръчката от списъка
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProductId,Quantity,DateOrder")] Orders orders)
+        public async Task<IActionResult> CompleteOrder(string clientId)
         {
-            if (id != orders.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(orders);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!OrdersExists(orders.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-           // ViewData["ClientId"] = new SelectList(_context.Users, "Id", "Id", orders.ClientId);
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", orders.ProductId);
-            return View(orders);
-        }
-
-        // GET: Orders/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var orders = await _context.Orders
-                .Include(o => o.Client)
-                .Include(o => o.Product)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (orders == null)
-            {
-                return NotFound();
-            }
-
-            return View(orders);
-        }
-
-        // POST: Orders/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var orders = await _context.Orders.FindAsync(id);
-            if (orders != null)
-            {
-                _context.Orders.Remove(orders);
-            }
-
+            if (!User.IsInRole("Admin")) return Forbid();
+            var items = _context.Orders.Where(o => o.ClientId == clientId && o.Status == "Completed");
+            _context.Orders.RemoveRange(items);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool OrdersExists(int id)
+        // POST: Премахване на продукт от количката
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
         {
-            return _context.Orders.Any(e => e.Id == id);
+            var order = await _context.Orders.FindAsync(id);
+            if (order != null)
+            {
+                var allSame = _context.Orders.Where(o => o.ProductId == order.ProductId && o.ClientId == order.ClientId && o.Status == "Cart");
+                _context.Orders.RemoveRange(allSame);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
         }
     }
 }
