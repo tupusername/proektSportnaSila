@@ -1,87 +1,187 @@
 ﻿@model IEnumerable<SportnaSila.Models.Orders>
 
 <div class="container py-5">
-    @if (User.IsInRole("Admin"))
+    @if (TempData["OrderSuccess"] != null)
     {
-        @* --- ИЗГЛЕД ЗА АДМИН --- *@
-        <h1 class="fw-bold mb-4">Входящи поръчки (Админ)</h1>
+        @* ЕКРАН ЗА УСПЕХ *@
+        <div class="d-flex justify-content-center align-items-center py-5">
+            <div class="card border-0 shadow-lg rounded-4 p-5 text-center" style="max-width: 600px;">
+                <div class="display-1 text-success mb-4">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <h1 class="fw-bold">Вашата поръчка е приета!</h1>
+                <p class="lead text-muted">Благодарим ви, че избрахте SportnaSila.</p>
 
-        @foreach (var group in Model.GroupBy(o => o.ClientId))
-        {
-            var client = group.First().Client;
-            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-                <div class="card-header bg-dark text-white p-3 d-flex justify-content-between">
-                    <span><i class="bi bi-person-circle"></i> Клиент: <b>@client.UserName</b></span>
-                    <span class="badge bg-primary">@group.Count() позиции</span>
+                <div class="bg-light d-inline-block px-4 py-2 rounded-pill my-4 border shadow-sm">
+                    <h4 class="mb-0 fw-bold text-dark">Номер на поръчка: #@ViewBag.OrderNumber</h4>
                 </div>
-                <div class="table-responsive">
-                    <table class="table mb-0 align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Продукт</th>
-                                <th class="text-center">Количество</th>
-                                <th class="text-end pe-4">Цена</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in group)
-                            {
-                                <tr>
-                                    <td class="ps-4">@item.Product.Name</td>
-                                    <td class="text-center">@item.Quantity бр.</td>
-                                    <td class="text-end pe-4 fw-bold">@(item.Product.Price* item.Quantity) €</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-                <div class="card-footer bg-white p-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold">Общо: @group.Sum(x => x.Product.Price * x.Quantity).ToString("0.00") €</h5>
-                    <form asp-action="CompleteOrder" asp-route-clientId="@group.Key" method="post">
-                        <button type="submit" class="btn btn-success rounded-pill px-4" onclick="return confirm('Завършване на поръчката?')">
-                            ЗАВЪРШИ ПОРЪЧКАТА
-                        </button>
-                    </form>
+
+                <p class="text-muted small mt-2">Ще бъдете пренасочени към каталога автоматично...</p>
+
+                <div class="mt-4">
+                    <a href="/Products/Index" class="btn btn-lg rounded-pill px-5 text-white shadow" style="background-color: #ff4d05;">Към каталога</a>
                 </div>
             </div>
-        }
-    }
-    else
-    {
-        @* --- ИЗГЛЕД ЗА КЛИЕНТ (КОЛИЧКА) --- *@
-        <h1 class="fw-bold mb-4">Моята количка</h1>
+        </div>
 
-        <div class="row">
-            <div class="col-lg-8">
-                @foreach (var item in Model)
-                {
-                    <div class="card border-0 shadow-sm rounded-4 mb-3 p-3">
-                        <div class="row align-items-center">
-                            <div class="col-2"><img src="@item.Product.ImgUrl" class="img-fluid rounded-3" style="max-height: 80px;"></div>
-                            <div class="col-6">
-                                <h5 class="fw-bold mb-1">@item.Product.Name</h5>
-                                <p class="text-muted mb-0">@item.Quantity бр. x @item.Product.Price €</p>
+        <script>
+            setTimeout(function () {
+                window.location.href = '/Products/Index';
+            }, 5000);
+        </script>
+    }
+    else if (User.IsInRole("Admin"))
+    {
+        <h1 class="fw-bold mb-4 text-uppercase border-start border-4 border-dark ps-3">Админ Панел - Поръчки</h1>
+
+        <div class="accordion border-0 shadow-sm rounded-4 overflow-hidden" id="adminOrdersAccordion">
+            @{
+                int counter = 0;
+            }
+            @foreach (var group in Model.GroupBy(o => o.ClientId))
+            {
+                counter++;
+                var totalSum = group.Sum(o => o.Product.Price * o.Quantity);
+                var clientId = group.First().ClientId;
+                var clientName = group.First().Client.UserName;
+
+                <div class="accordion-item border-0 mb-2 shadow-sm rounded-4 overflow-hidden">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed py-3 px-4 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#order-@counter">
+                            <div class="d-flex justify-content-between w-100 align-items-center">
+                                <div>
+                                    <span class="badge bg-dark rounded-pill me-2">@counter</span>
+                                    <span class="fw-bold text-dark">Поръчка от: @clientName</span>
+                                </div>
+                                <div class="me-3">
+                                    <span class="text-muted small me-2">Обща сума:</span>
+                                    <span class="fw-bold text-success">@totalSum.ToString("0.00") €</span>
+                                </div>
                             </div>
-                            <div class="col-4 text-end">
-                                <div class="h5 fw-bold" style="color: #ff4d05;">@(item.Product.Price* item.Quantity) €</div>
-                                <form asp-action="Delete" asp-route-id="@item.Id" method="post">
-                                    <button type="submit" class="btn text-danger btn-sm p-0 border-0">Премахни</button>
+                        </button>
+                    </h2>
+                    <div id="order-@counter" class="accordion-collapse collapse" data-bs-parent="#adminOrdersAccordion">
+                        <div class="accordion-body bg-light p-4">
+                            <h6 class="fw-bold mb-3 text-muted small text-uppercase">Продукти в поръчката:</h6>
+                            <ul class="list-group list-group-flush rounded-3 shadow-sm mb-4">
+                                @foreach (var item in group)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                        <div class="d-flex align-items-center">
+                                            <img src="@item.Product.ImgUrl" class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                            <span class="fw-semibold">@item.Product.Name</span>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-secondary rounded-pill me-3">@item.Quantity бр.</span>
+                                            <span class="fw-bold">@(item.Product.Price* item.Quantity) €</span>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+
+                            <div class="d-flex justify-content-end">
+                                <form asp-action="AdminConfirm" method="post">
+                                    <input type="hidden" name="clientId" value="@clientId" />
+                                    <button type="submit" class="btn btn-lg text-white fw-bold rounded-pill px-5 shadow-sm" style="background-color: #ff4d05;">
+                                        ПОТВЪРДИ ПОРЪЧКАТА
+                                    </button>
                                 </form>
                             </div>
                         </div>
                     </div>
-                }
-            </div>
-            <div class="col-lg-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4">
-                    <h4 class="fw-bold mb-3">Детайли</h4>
-                    <div class="d-flex justify-content-between border-top pt-3">
-                        <span class="h5">Обща сума:</span>
-                        <span class="h5 fw-bold" style="color: #ff4d05;">@Model.Sum(o => o.Product.Price * o.Quantity).ToString("0.00") €</span>
-                    </div>
-                    <button class="btn btn-lg w-100 rounded-3 mt-4 text-white fw-bold" style="background-color: #ff4d05;">ЗАВЪРШИ ПОРЪЧКАТА</button>
                 </div>
-            </div>
+            }
         </div>
     }
+    else
+    {
+        @* КОЛИЧКА НА ПОТРЕБИТЕЛЯ - ТУК МАХНАХМЕ ЕКСТРИТЕ *@
+        <h1 class="fw-bold mb-4">Моята количка</h1>
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <h3 class="text-muted">Количката ви е празна.</h3>
+                <a href="/Products/Index" class="btn btn-primary mt-3">Виж продукти</a>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-lg-8">
+                    @foreach (var item in Model)
+                    {
+                        <div class="card border-0 shadow-sm rounded-4 mb-3 p-3">
+                            <div class="row align-items-center">
+                                <div class="col-2">
+                                    <img src="@item.Product.ImgUrl" class="img-fluid rounded-3" style="max-height: 80px;">
+                                </div>
+                                <div class="col-6">
+                                    <h5 class="fw-bold">@item.Product.Name</h5>
+                                    <p class="text-muted mb-0">@item.Quantity бр. x @item.Product.Price €</p>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <h5 class="fw-bold text-danger">@(item.Product.Price* item.Quantity) €</h5>
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post">
+                                        <button type="submit" class="btn text-muted border-0 bg-transparent p-0">Премахни</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+                        <h4 class="fw-bold">Общо: @Model.Sum(o => o.Product.Price * o.Quantity).ToString("0.00") €</h4>
+                        <button type="button" class="btn btn-lg w-100 mt-3 text-white fw-bold shadow-sm" style="background-color: #ff4d05; border-radius: 12px;" data-bs-toggle="modal" data-bs-target="#orderModal">
+                            ПОРЪЧАЙ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@* МОДАЛЪТ ОСТАВА СЪЩИЯ *@
+<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form asp-action="FinalizeOrder" method="post">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold px-2 pt-2">Данни за поръчка</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Име</label>
+                        <input type="text" name="firstName" class="form-control rounded-3" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Фамилия</label>
+                        <input type="text" name="lastName" class="form-control rounded-3" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Доставчик</label>
+                        <select name="supplierId" class="form-select rounded-3" required>
+                            <option value="">Избери доставчик...</option>
+                            @if (ViewBag.Suppliers != null)
+                            {
+                                foreach (var s in ViewBag.Suppliers)
+                                {
+                                    <option value="@s.Id">@s.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Офис на доставчик</label>
+                        <input type="text" name="deliveryOffice" class="form-control rounded-3" required placeholder="Град, Адрес на офис...">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="submit" class="btn btn-lg w-100 text-white fw-bold shadow-sm" style="background-color: #ff4d05; border-radius: 12px;">ПОТВЪРДИ</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>

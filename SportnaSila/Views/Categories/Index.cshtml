@@ -31,20 +31,46 @@
                          onclick="window.location='@Url.Action("Index", "Products", new { categoryId = item.Id })'">
 
                         <div class="product-image">
-                            @if (item.Name == "Футбол")
+                            @* 1. Правим името в малки букви за сигурно сравнение *@
+                            @{
+                                var name = item.Name.ToLower().Trim();
+                            }
+
+                            @if (name == "футбол")
                             {
                                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSyy6kkL_OFaq6kzHnISf46NSGH855bmk8Z5Q&s"
                                      alt="Футбол" class="product-image" style="width: 100%; height: 250px; object-fit: cover;" />
                             }
-                            else if (item.Name == "Бойни спортове")
+                            else if (name == "бойни спортове")
                             {
                                 <img src="https://m3.netinfo.bg/media/images/50438/50438641/960-600-antyni-dzhoshua-dzhyrmejn-franklin.jpg"
                                      alt="Бойни спортове" class="product-image" style="width: 100%; height: 250px; object-fit: cover;" />
                             }
+                            else if (name == "волейбол")
+                            {
+                                <img src="https://media.istockphoto.com/id/482788327/photo/volleyball-players-in-action.jpg?b=1&s=612x612&w=0&k=20&c=4h5lfW46UfyRU3lWSTQmnnDrk9e4EuMNsaCT1ThK9p4="
+                                     alt="Волейбол" class="product-image" style="width: 100%; height: 250px; object-fit: cover;" />
+                            }
+                            else if (name == "баскетбол")
+                            {
+                                <img src="https://ataka.bg/storage/2024/03/playing-basketball.jpg"
+                                     alt="Баскетбол" class="product-image" style="width: 100%; height: 250px; object-fit: cover;" />
+                            }
+                            else if (name == "тенис на корт")
+                            {
+                                <img src="https://www.interhotelsandanski.bg/media/k2/items/cache/71f67488b0857639cee631943a3fc6fa_5_XL.jpg"
+                                     alt="Тенис на Корт" class="product-image" style="width: 100%; height: 250px; object-fit: cover;" />
+                            }
+                            @* 2. ВАЖНО: Тук трябва да е с малки букви, защото променливата 'name' е ToLower() *@
+                            else if (name == "тенис на маса")
+                            {
+                                <img src="https://www.stigaus.com/cdn/shop/articles/T8735F_STIGA_Evolution_Table_Tennis_Table_Lifestyle--12.jpg?v=1697055481"
+                                     alt="Тенис на Маса" class="product-image" style="width: 100%; height: 250px; object-fit: cover;" />
+                            }
                             else
                             {
                                 <div class="d-flex align-items-center justify-content-center bg-dark" style="height: 250px;">
-                                    <i class="bi bi-trophy" style="font-size: 4rem; color: var(--accent);"></i>
+                                    <i class="bi bi-trophy" style="font-size: 4rem; color: #28a745;"></i>
                                 </div>
                             }
                         </div>
@@ -62,7 +88,7 @@
                             @if (User.IsInRole("Admin"))
                             {
                                 <div class="admin-actions mt-3 border-top pt-2">
-                                    <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation();">Редакция</a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation();">Редакция</a> |
                                     <a asp-action="Delete" asp-route-id="@item.Id" class="text-danger" onclick="event.stopPropagation();">Изтрий</a>
                                 </div>
                             }
