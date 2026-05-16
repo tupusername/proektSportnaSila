@@ -57,25 +57,30 @@ namespace SportnaSila.Controllers
         {
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "BrandName");
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
-            // Зареждаме доставчиците за падащото меню
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "Id", "Name"); 
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([Bind("Name,Description,ImgUrl,Price,Quantity,CategoryId,BrandId,SupplierId")] Products products)
+        public async Task<IActionResult> Create([Bind("Name,Description,ImgUrl,ImgId,Price,Quantity,CategoryId,BrandId")] Products products)
         {
+            // Махаме софтуерната проверка за доставчик
+            ModelState.Remove("SupplierId");
+            ModelState.Remove("Supplier");
+
+            // ФИКС: Задаваме твърдо Id = 1 (или друго съществуващо Id от dbo.Suppliers),
+            // за да задоволим FOREIGN KEY констрейнта в базата данни и да не гърми SaveChangesAsync()!
+            products.SupplierId = 1;
+
             if (ModelState.IsValid)
             {
                 _context.Add(products);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(); // Вече ще запише успешно!
                 return RedirectToAction(nameof(Index));
             }
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "BrandName", products.BrandId);
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", products.CategoryId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "Id", "Name", products.SupplierId);
             return View(products);
         }
 
@@ -89,16 +94,24 @@ namespace SportnaSila.Controllers
 
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "BrandName", products.BrandId);
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", products.CategoryId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "Id", "Name", products.SupplierId);
             return View(products);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,ImgUrl,Price,Quantity,CategoryId,BrandId,SupplierId")] Products products)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,ImgUrl,ImgId,Price,Quantity,CategoryId,BrandId")] Products products)
         {
             if (id != products.Id) return NotFound();
+
+            ModelState.Remove("SupplierId");
+            ModelState.Remove("Supplier");
+
+            // За застраховка при редакция, ако стария продукт няма доставчик, му забиваме същия по подразбиране
+            if (products.SupplierId == null || products.SupplierId == 0)
+            {
+                products.SupplierId = 1;
+            }
 
             if (ModelState.IsValid)
             {
@@ -116,7 +129,6 @@ namespace SportnaSila.Controllers
             }
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "BrandName", products.BrandId);
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", products.CategoryId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "Id", "Name", products.SupplierId);
             return View(products);
         }
 

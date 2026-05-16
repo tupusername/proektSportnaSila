@@ -1,0 +1,87 @@
+﻿@model IEnumerable<SportnaSila.Models.Orders>
+
+<div class="container py-5">
+    @if (User.IsInRole("Admin"))
+    {
+        @* --- ИЗГЛЕД ЗА АДМИН --- *@
+        <h1 class="fw-bold mb-4">Входящи поръчки (Админ)</h1>
+
+        @foreach (var group in Model.GroupBy(o => o.ClientId))
+        {
+            var client = group.First().Client;
+            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+                <div class="card-header bg-dark text-white p-3 d-flex justify-content-between">
+                    <span><i class="bi bi-person-circle"></i> Клиент: <b>@client.UserName</b></span>
+                    <span class="badge bg-primary">@group.Count() позиции</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Продукт</th>
+                                <th class="text-center">Количество</th>
+                                <th class="text-end pe-4">Цена</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in group)
+                            {
+                                <tr>
+                                    <td class="ps-4">@item.Product.Name</td>
+                                    <td class="text-center">@item.Quantity бр.</td>
+                                    <td class="text-end pe-4 fw-bold">@(item.Product.Price* item.Quantity) €</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-white p-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">Общо: @group.Sum(x => x.Product.Price * x.Quantity).ToString("0.00") €</h5>
+                    <form asp-action="CompleteOrder" asp-route-clientId="@group.Key" method="post">
+                        <button type="submit" class="btn btn-success rounded-pill px-4" onclick="return confirm('Завършване на поръчката?')">
+                            ЗАВЪРШИ ПОРЪЧКАТА
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        @* --- ИЗГЛЕД ЗА КЛИЕНТ (КОЛИЧКА) --- *@
+        <h1 class="fw-bold mb-4">Моята количка</h1>
+
+        <div class="row">
+            <div class="col-lg-8">
+                @foreach (var item in Model)
+                {
+                    <div class="card border-0 shadow-sm rounded-4 mb-3 p-3">
+                        <div class="row align-items-center">
+                            <div class="col-2"><img src="@item.Product.ImgUrl" class="img-fluid rounded-3" style="max-height: 80px;"></div>
+                            <div class="col-6">
+                                <h5 class="fw-bold mb-1">@item.Product.Name</h5>
+                                <p class="text-muted mb-0">@item.Quantity бр. x @item.Product.Price €</p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <div class="h5 fw-bold" style="color: #ff4d05;">@(item.Product.Price* item.Quantity) €</div>
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post">
+                                    <button type="submit" class="btn text-danger btn-sm p-0 border-0">Премахни</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <h4 class="fw-bold mb-3">Детайли</h4>
+                    <div class="d-flex justify-content-between border-top pt-3">
+                        <span class="h5">Обща сума:</span>
+                        <span class="h5 fw-bold" style="color: #ff4d05;">@Model.Sum(o => o.Product.Price * o.Quantity).ToString("0.00") €</span>
+                    </div>
+                    <button class="btn btn-lg w-100 rounded-3 mt-4 text-white fw-bold" style="background-color: #ff4d05;">ЗАВЪРШИ ПОРЪЧКАТА</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>

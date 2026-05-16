@@ -1,0 +1,75 @@
+﻿@model IEnumerable<SportnaSila.Models.Categories>
+
+@{
+    ViewData["Title"] = "Каталог Спортове";
+}
+
+<section class="page-header text-center">
+    <div class="container">
+        <h1>Каталог</h1>
+        <p>Изберете спортна категория, за да разгледате екипировката.</p>
+    </div>
+</section>
+
+<section class="pb-5">
+    <div class="container">
+
+        <div class="mb-4">
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Create" class="btn btn-main">
+                    Добави нова категория
+                </a>
+            }
+        </div>
+
+        <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="product-card"
+                         onclick="window.location='@Url.Action("Index", "Products", new { categoryId = item.Id })'">
+
+                        <div class="product-image">
+                            @if (item.Name == "Футбол")
+                            {
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSyy6kkL_OFaq6kzHnISf46NSGH855bmk8Z5Q&s"
+                                     alt="Футбол" class="product-image" style="width: 100%; height: 250px; object-fit: cover;" />
+                            }
+                            else if (item.Name == "Бойни спортове")
+                            {
+                                <img src="https://m3.netinfo.bg/media/images/50438/50438641/960-600-antyni-dzhoshua-dzhyrmejn-franklin.jpg"
+                                     alt="Бойни спортове" class="product-image" style="width: 100%; height: 250px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center bg-dark" style="height: 250px;">
+                                    <i class="bi bi-trophy" style="font-size: 4rem; color: var(--accent);"></i>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="product-body text-center">
+                            <h3 class="product-title">@item.Name</h3>
+                            <p class="product-description">
+                                @item.Description
+                            </p>
+
+                            <div class="mt-3">
+                                <span class="btn btn-main btn-sm">Виж продуктите</span>
+                            </div>
+
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <div class="admin-actions mt-3 border-top pt-2">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation();">Редакция</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="text-danger" onclick="event.stopPropagation();">Изтрий</a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

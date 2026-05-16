@@ -1,7 +1,4 @@
-﻿
-
-
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="bg">
 <head>
     <meta charset="utf-8" />
@@ -68,7 +65,8 @@
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="mb-1">&copy; 2026 - SportnaSila</p>
-                    <a asp-area="" asp-controller="Home" asp-action="Privacy">Политика за поверителност</a>
+                    @* Промененият линк с добавен фрагмент (анкер), който праща директно долу *@
+                    <a asp-area="" asp-controller="Home" asp-action="Privacy" asp-fragment="privacy-section">Политика за поверителност</a>
                 </div>
             </div>
         </div>

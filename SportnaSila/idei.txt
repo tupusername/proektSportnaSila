@@ -1,0 +1,7 @@
+
+кошница
+търсачка
+филтър по категория и марка
+любими продукти
+product details с бутон “Добави в количка”
+registriraniq potrebitel da ne vijda poruchki na drugiq 

@@ -1,69 +1,90 @@
 ﻿@model SportnaSila.Models.Products
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Редактирай продукт";
 }
 
-<h1>Edit</h1>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold m-0">Редактирай продукт</h1>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-left me-2"></i>Обратно към каталога
+        </a>
+    </div>
 
-<h4>Products</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
+    @* Основната бяла карта от интерфейса *@
+    <div class="card shadow-sm rounded-4 p-4 border-0" style="max-width: 900px;">
         <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            @* Скрити полета за ID и връзка с изображението - задължителни за работата на контролера *@
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
+            <input type="hidden" asp-for="ImgUrl" />
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label fw-bold">Име на продукта</label>
+                <input asp-for="Name" class="form-control rounded-3" placeholder="напр. Футболна топка" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fw-bold">Описание</label>
+                <textarea asp-for="Description" class="form-control rounded-3" rows="4"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="ImgUrl" class="control-label"></label>
-                <input asp-for="ImgUrl" class="form-control" />
+
+            <div class="mb-3">
+                <label asp-for="ImgUrl" class="form-label fw-bold">URL на снимка</label>
+                <input asp-for="ImgUrl" class="form-control rounded-3" />
                 <span asp-validation-for="ImgUrl" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Price" class="control-label"></label>
-                <input asp-for="Price" class="form-control" />
-                <span asp-validation-for="Price" class="text-danger"></span>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Price" class="form-label fw-bold">Цена (€)</label>
+                    <input asp-for="Price" class="form-control rounded-3" type="number" step="0.01" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Quantity" class="form-label fw-bold">Количество</label>
+                    <input asp-for="Quantity" class="form-control rounded-3" type="number" />
+                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Quantity" class="control-label"></label>
-                <input asp-for="Quantity" class="form-control" />
-                <span asp-validation-for="Quantity" class="text-danger"></span>
+
+            <div class="row">
+                @* ФИКС: Променено на col-md-6, за да запълни реда перфектно *@
+                <div class="col-md-6 mb-3">
+                    <label asp-for="CategoryId" class="form-label fw-bold">Категория</label>
+                    <select asp-for="CategoryId" class="form-select rounded-3" asp-items="ViewBag.CategoryId">
+                        <option value="">-- Избери категория --</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+
+                @* ФИКС: Променено на col-md-6, за да запълни реда перфектно *@
+                <div class="col-md-6 mb-3">
+                    <label asp-for="BrandId" class="form-label fw-bold">Марка</label>
+                    <select asp-for="BrandId" class="form-select rounded-3" asp-items="ViewBag.BrandId">
+                        <option value="">-- Избери марка --</option>
+                    </select>
+                    <span asp-validation-for="BrandId" class="text-danger"></span>
+                </div>
+
+                @* Доставчикът е напълно премахнат от тук *@
             </div>
-            <div class="form-group">
-                <label asp-for="CategoryId" class="control-label"></label>
-                <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
-                <span asp-validation-for="CategoryId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="SupplierId" class="control-label"></label>
-                <select asp-for="SupplierId" class="form-control" asp-items="ViewBag.SupplierId"></select>
-                <span asp-validation-for="SupplierId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="BrandId" class="control-label"></label>
-                <select asp-for="BrandId" class="form-control" asp-items="ViewBag.BrandId"></select>
-                <span asp-validation-for="BrandId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+
+            <div class="pt-3 border-top">
+                <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold py-2 shadow-sm">
+                    <i class="bi bi-check-lg me-2"></i>ЗАПАЗИ ПРОМЕНИТЕ
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

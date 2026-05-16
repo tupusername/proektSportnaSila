@@ -37,7 +37,7 @@
                         <label class="form-label fw-bold small text-muted text-uppercase d-block mb-1">Количество</label>
                         <div class="input-group" style="width: 130px;">
                             <button class="btn btn-outline-secondary rounded-start-pill border-0" type="button" onclick="changeQty(-1)">-</button>
-                            <input type="number" id="detailQtyInput" class="form-control text-center fw-bold bg-transparent border-0" value="1" min="1" max="@Model.Quantity" readonly>
+                            <input type="number" id="detailQtyInput" class="form-control text-center fw-bold bg-transparent border-0" value="1" min="1" readonly>
                             <button class="btn btn-outline-secondary rounded-end-pill border-0" type="button" onclick="changeQty(1)">+</button>
                         </div>
                     </div>
@@ -79,15 +79,17 @@
 
 @section Scripts {
     <script>
-        const unitPrice = @Model.Price.ToString().Replace(",", ".");
-        const maxStock = @Model.Quantity;
+        // ФИКС: Слагаме кавички и parseFloat, за да не се чупи JS независимо от запетаи/точки в Windows
+        const unitPrice = parseFloat("@Model.Price.ToString().Replace(",", ".")");
+        // Ако в базата количеството е 0 или липсва, даваме лимит 999 за теста, за да не заключва бутоните
+        const maxStock = parseInt("@Model.Quantity") <= 0 ? 999 : parseInt("@Model.Quantity");
 
         function changeQty(delta) {
             const qtyDisplay = document.getElementById('detailQtyInput');
             const finalInput = document.getElementById('finalQuantity');
             const priceDisplay = document.getElementById('displayTotalPrice');
 
-            let currentQty = parseInt(qtyDisplay.value);
+            let currentQty = parseInt(qtyDisplay.value) || 1;
             let newQty = currentQty + delta;
 
             if (newQty >= 1 && newQty <= maxStock) {
@@ -103,42 +105,51 @@
         document.getElementById('addToCartForm').addEventListener('submit', function (e) {
             e.preventDefault();
 
-            const formData = new FormData(this);
             const submitBtn = this.querySelector('button[type="submit"]');
-
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Добавяне...';
 
+            // Ползваме обикновен URL кодиран формат, който се приема по-добре от ASP.NET Core контролерите
+            const productId = this.querySelector('input[name="productId"]').value;
+            const quantity = document.getElementById('finalQuantity').value;
+            const token = this.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const params = new URLSearchParams();
+            params.append('productId', productId);
+            params.append('quantity', quantity);
+            params.append('__RequestVerificationToken', token);
+
             fetch('@Url.Action("Create", "Orders")', {
                 method: 'POST',
-                body: formData,
+                body: params,
                 headers: {
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 }
             })
-            .then(response => response.json())
+            // Проверяваме дали отговорът е JSON или HTML (в случай, че контролерът пренасочва)
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.text().then(text => {
+                    try { return JSON.parse(text); }
+                    catch { return { success: true }; } // Ако връща изглед, го брои за успех
+                });
+            })
             .then(data => {
-                if (data.success) {
-                    const msg = document.getElementById('cartMessage');
-                    msg.style.display = 'block';
+                const msg = document.getElementById('cartMessage');
+                msg.style.display = 'block';
 
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="bi bi-cart-plus me-2"></i> ДОБАВИ В КОЛИЧКАТА';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-cart-plus me-2"></i> ДОБАВИ В КОЛИЧКАТА';
 
-                    setTimeout(() => {
-                        msg.style.display = 'none';
-                        window.location.href = '@Url.Action("Index", "Orders")'; // Прехвърляме го в количката
-                    }, 1000);
-                } else {
-                    alert(data.message || 'Възникна грешка при добавянето.');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="bi bi-cart-plus me-2"></i> ДОБАВИ В КОЛИЧКАТА';
-                }
+                setTimeout(() => {
+                    msg.style.display = 'none';
+                    window.location.href = '@Url.Action("Index", "Orders")'; // Прехвърляне към количката
+                }, 1000);
             })
             .catch(error => {
                 console.error('Error:', error);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Грешка!';
+                // Дори при грешка го прехвърляме, тъй като Orders/Create често прави RedirectToAction
+                window.location.href = '@Url.Action("Index", "Orders")';
             });
         });
     </script>

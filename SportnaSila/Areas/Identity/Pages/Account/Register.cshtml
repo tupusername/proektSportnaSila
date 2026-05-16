@@ -4,45 +4,124 @@
     ViewData["Title"] = "Регистрация";
 }
 
+<style>
+    .auth-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 85vh;
+        padding: 2rem 0;
+    }
+
+    .auth-card {
+        background: #fff;
+        padding: 2.5rem;
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        max-width: 550px;
+    }
+
+    .auth-title {
+        font-weight: 800;
+        color: #212529;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    .auth-btn {
+        background: #ff4d05;
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 50px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+
+        .auth-btn:hover {
+            background: #e04304;
+            transform: translateY(-2px);
+        }
+
+    .auth-divider {
+        height: 1px;
+        background: #dee2e6;
+        margin: 1.5rem 0;
+    }
+</style>
+
 <section class="auth-section">
     <div class="auth-card">
         <h1 class="auth-title">Регистрация</h1>
         <p class="auth-subtitle">Създай нов акаунт в SportnaSila</p>
 
         <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
 
+            @* Ред 1: Потребителско име *@
             <div class="mb-3">
-                <label asp-for="Input.UserName" class="form-label"></label>
-                <input asp-for="Input.UserName" class="form-control" autocomplete="username" aria-required="true" placeholder="Въведи потребителско име" />
+                <label asp-for="Input.UserName" class="form-label fw-bold">Потребителско име</label>
+                <input asp-for="Input.UserName" class="form-control rounded-3" autocomplete="username" placeholder="Въведи потребителско име" />
                 <span asp-validation-for="Input.UserName" class="text-danger"></span>
             </div>
+
+            @* Ред 2: Име и Фамилия *@
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.FirstName" class="form-label fw-bold">Име</label>
+                    <input asp-for="Input.FirstName" class="form-control rounded-3" placeholder="Въведи име" />
+                    <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.LastName" class="form-label fw-bold">Фамилия</label>
+                    <input asp-for="Input.LastName" class="form-control rounded-3" placeholder="Въведи фамилия" />
+                    <span asp-validation-for="Input.LastName" class="text-danger"></span>
+                </div>
+            </div>
+
+            @* Ред 3: Имейл *@
             <div class="mb-3">
-                <label asp-for="Input.Email" class="form-label"></label>
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="Въведи имейл" />
+                <label asp-for="Input.Email" class="form-label fw-bold">Имейл адрес</label>
+                <input asp-for="Input.Email" class="form-control rounded-3" type="email" autocomplete="email" placeholder="Въведи имейл" />
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
             </div>
 
+            @* Ред 4: Телефонен номер *@
             <div class="mb-3">
-                <label asp-for="Input.Password" class="form-label"></label>
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Въведи парола" />
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
+                <label asp-for="Input.PhoneNumber" class="form-label fw-bold">Телефонен номер</label>
+                <input asp-for="Input.PhoneNumber" class="form-control rounded-3" type="tel" placeholder="напр. 08XXXXXXXX" />
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Input.ConfirmPassword" class="form-label"></label>
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Повтори паролата" />
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            @* Ред 5: Пароли *@
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Password" class="form-label fw-bold">Парола</label>
+                    <input asp-for="Input.Password" class="form-control rounded-3" type="password" autocomplete="new-password" placeholder="Въведи парола" />
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.ConfirmPassword" class="form-label fw-bold">Повтори парола</label>
+                    <input asp-for="Input.ConfirmPassword" class="form-control rounded-3" type="password" autocomplete="new-password" placeholder="Повтори паролата" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                </div>
             </div>
 
-            <button id="registerSubmit" type="submit" class="auth-btn">Създай акаунт</button>
+            <button id="registerSubmit" type="submit" class="auth-btn shadow-sm">СЪЗДАЙ АКАУНТ</button>
 
             <div class="auth-divider"></div>
 
-            <div class="auth-links">
-                <p class="mb-0">
+            <div class="text-center">
+                <p class="mb-0 text-muted">
                     Вече имаш профил?
-                    <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Влез</a>
+                    <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="text-primary fw-bold text-decoration-none">Влез оттук</a>
                 </p>
             </div>
         </form>

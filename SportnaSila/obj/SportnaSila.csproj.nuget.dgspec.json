@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\1212-10\\Desktop\\SportnaSila\\SportnaSila\\SportnaSila.csproj": {}
+    "C:\\Users\\Iveli\\Desktop\\SportnaSila\\SportnaSila\\SportnaSila.csproj": {}
   },
   "projects": {
-    "C:\\Users\\1212-10\\Desktop\\SportnaSila\\SportnaSila\\SportnaSila.csproj": {
+    "C:\\Users\\Iveli\\Desktop\\SportnaSila\\SportnaSila\\SportnaSila.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\1212-10\\Desktop\\SportnaSila\\SportnaSila\\SportnaSila.csproj",
+        "projectUniqueName": "C:\\Users\\Iveli\\Desktop\\SportnaSila\\SportnaSila\\SportnaSila.csproj",
         "projectName": "SportnaSila",
-        "projectPath": "C:\\Users\\1212-10\\Desktop\\SportnaSila\\SportnaSila\\SportnaSila.csproj",
-        "packagesPath": "C:\\Users\\1212-10\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\1212-10\\Desktop\\SportnaSila\\SportnaSila\\obj\\",
+        "projectPath": "C:\\Users\\Iveli\\Desktop\\SportnaSila\\SportnaSila\\SportnaSila.csproj",
+        "packagesPath": "C:\\Users\\Iveli\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Iveli\\Desktop\\SportnaSila\\SportnaSila\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\1212-10\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Iveli\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -101,7 +101,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.311/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

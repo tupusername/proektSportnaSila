@@ -1,0 +1,62 @@
+﻿<form id="addToCartForm" class="mt-4">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="productId" value="@Model.Id" />
+    <input type="hidden" name="quantity" value="1" />
+
+    <button type="submit" class="btn btn-lg px-5 fw-bold text-white shadow-sm" style="background-color: #ff4d05; border-radius: 12px;">
+        <i class="bi bi-cart-plus me-2"></i> ДОБАВИ В КОЛИЧКАТА
+    </button>
+</form>
+
+<div id="cartMessage" class="mt-3" style="display: none;">
+    <div class="alert alert-success d-flex align-items-center rounded-3">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span>Продуктът беше добавен в количката!</span>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('addToCartForm').addEventListener('submit', function (e) {
+            e.preventDefault(); // Спираме презареждането
+
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            // Визуална обратна връзка - деактивираме бутона временно
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Добавяне...';
+
+            fetch('@Url.Action("Create", "Orders")', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Показваме съобщение за успех
+                    const msg = document.getElementById('cartMessage');
+                    msg.style.display = 'block';
+
+                    // Връщаме бутона в нормално състояние
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-cart-plus me-2"></i> ДОБАВИ В КОЛИЧКАТА';
+
+                    // Скриваме съобщението след 3 секунди
+                    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+                } else {
+                    alert(data.message);
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Грешка!';
+            });
+        });
+    </script>
+}

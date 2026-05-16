@@ -24,9 +24,8 @@
             transform: translateY(-5px);
         }
 
-    /* Стил за текстовото поле за бройка */
     .qty-input-simple {
-        width: 60px;
+        width: 65px;
         height: 38px;
         text-align: center;
         border: 1px solid #ced4da;
@@ -34,17 +33,32 @@
         font-weight: bold;
     }
 
+        /* ФИКС: Подсигуряваме, че стрелките на числовото поле ще се виждат винаги във всички браузъри */
+        .qty-input-simple::-webkit-inner-spin-button,
+        .qty-input-simple::-webkit-outer-spin-button {
+            opacity: 1 !important;
+        }
+
     .qty-label {
         font-size: 0.8rem;
         font-weight: bold;
         color: #6c757d;
         margin-right: 8px;
     }
+
+    /* Стил за админ буноните */
+    .admin-controls {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #dee2e6;
+    }
 </style>
 
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-5">
-        <h2 class="fw-bold m-0">КАТАЛОГ</h2>
+        <h2 class="fw-bold m-0">Продукти</h2>
         @if (User.IsInRole("Admin"))
         {
             <a asp-action="Create" class="btn btn-success rounded-pill px-4 shadow-sm">
@@ -53,7 +67,22 @@
         }
     </div>
 
-    @foreach (var group in Model.GroupBy(p => p.Category.Name))
+    @{
+        // Дефинираме точния ред на категориите, както са в Каталога ти
+        var customOrder = new List<string>
+        {
+        "Футбол",
+        "Бойни спортове",
+        "Волейбол",
+        "Баскетбол",
+        "Тенис на Корт",
+        "Тенис на Маса"
+        };
+    }
+
+    @* Групираме продуктите и ги сортираме спрямо позицията им в нашия customOrder списък *@
+    @foreach (var group in Model.GroupBy(p => p.Category.Name)
+        .OrderBy(g => customOrder.IndexOf(g.Key) >= 0 ? customOrder.IndexOf(g.Key) : 999))
     {
         <div class="category-section">
             <h3 class="fw-bold category-title text-dark">@group.Key</h3>
@@ -62,7 +91,7 @@
                 {
                     <div class="col-md-4 col-sm-6">
                         <div class="card h-100 shadow-sm rounded-4 p-3 product-card">
-                            @* Снимката и името водят към детайли *@
+
                             <div onclick="window.location.href='@Url.Action("Details", "Products", new { id = item.Id })'" style="cursor:pointer">
                                 <div class="text-center bg-light rounded-3 p-3 mb-3">
                                     <img src="@item.ImgUrl" class="img-fluid" style="height: 180px; object-fit: contain;">
@@ -74,10 +103,9 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span class="h5 fw-bold text-primary mb-0">@item.Price.ToString("0.00") €</span>
 
-                                    @* ПРОСТ ТЕКСТБОКС *@
                                     <div class="d-flex align-items-center">
                                         <span class="qty-label">Брой:</span>
-                                        <input type="number" id="qty-@item.Id" class="qty-input-simple" value="1" min="1" max="@item.Quantity">
+                                        <input type="number" id="qty-@item.Id" class="qty-input-simple" value="1" min="1" data-max-qty="@item.Quantity">
                                     </div>
                                 </div>
 
@@ -85,6 +113,20 @@
                                         onclick="addToCartSimple(@item.Id)" id="btn-@item.Id">
                                     <i class="bi bi-cart-plus me-2"></i>ДОБАВИ
                                 </button>
+
+                                @* --- АДМИНИСТРАТОРСКИ ПАНЕЛ --- *@
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <div class="admin-controls">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm w-50 rounded-pill">
+                                            <i class="bi bi-pencil-square"></i> Редакция
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm w-50 rounded-pill">
+                                            <i class="bi bi-trash"></i> Изтрий
+                                        </a>
+                                    </div>
+                                }
+                                @* ----------------------------- *@
                             </div>
                         </div>
                     </div>
@@ -97,14 +139,19 @@
 @section Scripts {
     <script>
         function addToCartSimple(productId) {
-            // Взимаме стойността директно от текстовото поле
             const qtyInput = document.getElementById('qty-' + productId);
             let qty = parseInt(qtyInput.value);
+            let maxQty = parseInt(qtyInput.getAttribute('data-max-qty')) || 999;
 
-            // Проверка за валидност
             if (isNaN(qty) || qty < 1) {
                 alert("Моля, въведете валидна бройка (минимум 1).");
                 qtyInput.value = 1;
+                return;
+            }
+
+            if (qty > maxQty) {
+                alert("Няма достатъчна наличност! Максимално количество: " + maxQty);
+                qtyInput.value = maxQty;
                 return;
             }
 
@@ -130,7 +177,7 @@
                         btn.className = "btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm";
                         btn.innerHTML = originalHtml;
                         btn.disabled = false;
-                        qtyInput.value = 1; // Нулираме на 1 след успех
+                        qtyInput.value = 1;
                     }, 2000);
                 },
                 error: function () {

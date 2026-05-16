@@ -1,0 +1,90 @@
+﻿@{
+    ViewData["Title"] = "Начало";
+}
+
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="hero-badge">Ново поколение спортна екипировка</span>
+                <h1 class="hero-title mt-3">
+                    Тренирай със стил, сила и увереност
+                </h1>
+                <p class="hero-text mt-3">
+                    Открий качествени спортни дрехи, обувки и аксесоари,
+                    подходящи за фитнес, бягане и активен начин на живот.
+                </p>
+
+                <div class="d-flex flex-wrap gap-3 mt-4">
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-main btn-lg">
+                        Разгледай продуктите
+                    </a>
+                    <a asp-controller="Home" asp-action="Privacy" class="btn btn-outline-light btn-lg">
+                        Научи повече
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="hero-card">
+                    <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80"
+                         alt="Sport image"
+                         class="img-fluid hero-image" />
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="features-section">
+    <div class="container">
+        <div class="section-title text-center mb-5">
+            <h2>Защо да избереш SportnaSila?</h2>
+            <p>Практичен, модерен и удобен магазин за твоята спортна визия.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="bi bi-award feature-icon"></i>
+                    <h4>Високо качество</h4>
+                    <p>Подбрани продукти от надеждни марки и доставчици.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="bi bi-truck feature-icon"></i>
+                    <h4>Бърза доставка</h4>
+                    <p>Бързо и удобно обслужване за твоите поръчки.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="bi bi-heart-pulse feature-icon"></i>
+                    <h4>Активен начин на живот</h4>
+                    <p>Екипировка за хора, които обичат движението и спорта.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="promo-section">
+    <div class="container">
+        <div class="promo-box">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <h3>Готов ли си за следващата си тренировка?</h3>
+                    <p class="mb-0">
+                        Разгледай нашите актуални предложения и намери правилната спортна екипировка за себе си.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-light btn-lg">
+                        Към магазина
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

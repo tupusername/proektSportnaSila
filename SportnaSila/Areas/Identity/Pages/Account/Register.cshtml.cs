@@ -46,25 +46,23 @@ namespace SportnaSila.Areas.Identity.Pages.Account
             _emailSender = emailSender;
         }
 
-
         [BindProperty]
         public InputModel Input { get; set; }
 
-
         public string ReturnUrl { get; set; }
 
-
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
-
 
         public class InputModel
         {
             [Required]
             [Display(Name = "UserName")]
             public string UserName { get; set; }
+
             [Required]
             [Display(Name = "FirstName")]
             public string FirstName { get; set; }
+
             [Required]
             [Display(Name = "LastName")]
             public string LastName { get; set; }
@@ -73,11 +71,11 @@ namespace SportnaSila.Areas.Identity.Pages.Account
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
+
             [Required]
             [Phone]
             [Display(Name = "PhoneNumber")]
-            public string PhoneNumber{ get; set; }
-
+            public string PhoneNumber { get; set; }
 
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
@@ -85,12 +83,12 @@ namespace SportnaSila.Areas.Identity.Pages.Account
             [Display(Name = "Password")]
             public string Password { get; set; }
 
-
             [DataType(DataType.Password)]
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
         }
+
         public async Task OnGetAsync(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
@@ -101,19 +99,17 @@ namespace SportnaSila.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
             if (ModelState.IsValid)
             {
-                //var user = CreateUser();
                 Clients user = new Clients
-
                 {
                     UserName = Input.UserName,
                     Email = Input.Email,
                     FirstName = Input.FirstName,
                     LastName = Input.LastName,
+                    PhoneNumber = Input.PhoneNumber // Фикс: Свързваме телефона
                 };
-
-
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -150,6 +146,8 @@ namespace SportnaSila.Areas.Identity.Pages.Account
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
+
+            // Ако нещо се провали, презареждаме формата с грешките
             return Page();
         }
 

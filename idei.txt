@@ -1,7 +1,6 @@
+Za nas готоо
+da opraa broikata na produktite готоо
+da opraa registraciqta  готоо
+da dobaa produkti naseide
+da dobaa oshte marki
 
-кошница
-търсачка
-филтър по категория и марка
-любими продукти
-product details с бутон “Добави в количка”
-registriraniq potrebitel da ne vijda poruchki na drugiq 
