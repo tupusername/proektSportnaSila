@@ -1,60 +1,195 @@
 ﻿@model IEnumerable<SportnaSila.Models.Products>
 
+@Html.AntiForgeryToken()
+
+<style>
+    .category-section {
+        margin-bottom: 3rem;
+    }
+
+    .category-title {
+        border-left: 5px solid #ff4d05;
+        padding-left: 15px;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .product-card {
+        transition: transform 0.3s ease;
+        border: none;
+    }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .qty-input-simple {
+        width: 65px;
+        height: 38px;
+        text-align: center;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+
+        /* ФИКС: Подсигуряваме, че стрелките на числовото поле ще се виждат винаги във всички браузъри */
+        .qty-input-simple::-webkit-inner-spin-button,
+        .qty-input-simple::-webkit-outer-spin-button {
+            opacity: 1 !important;
+        }
+
+    .qty-label {
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: #6c757d;
+        margin-right: 8px;
+    }
+
+    /* Стил за админ буноните */
+    .admin-controls {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #dee2e6;
+    }
+</style>
+
 <div class="container py-5">
-    <h2 class="fw-bold mb-4">Нашите продукти</h2>
-    <div class="row g-4">
-        @foreach (var item in Model)
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h2 class="fw-bold m-0">Продукти</h2>
+        @if (User.IsInRole("Admin"))
         {
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm border-0 rounded-4 p-3">
-                    <img src="@item.ImgUrl" class="card-img-top rounded-3" style="height: 200px; object-fit: contain;">
-                    <div class="card-body">
-                        <h5 class="fw-bold">@item.Name</h5>
-                        <p class="text-muted small">@item.Description</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span class="h4 fw-bold text-primary mb-0">@item.Price.ToString("0.00") €</span>
-                            
-                            <button class="btn btn-primary add-to-cart-btn px-3" data-product-id="@item.Id">
-                                <i class="bi bi-cart-plus"></i> Добави
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <a asp-action="Create" class="btn btn-success rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-lg me-2"></i>Добави нов продукт
+            </a>
         }
     </div>
+
+    @{
+        // Дефинираме точния ред на категориите, както са в Каталога ти
+        var customOrder = new List<string>
+        {
+        "Футбол",
+        "Бойни спортове",
+        "Волейбол",
+        "Баскетбол",
+        "Тенис на Корт",
+        "Тенис на Маса"
+        };
+    }
+
+    @* Групираме продуктите и ги сортираме спрямо позицията им в нашия customOrder списък *@
+    @foreach (var group in Model.GroupBy(p => p.Category.Name)
+        .OrderBy(g => customOrder.IndexOf(g.Key) >= 0 ? customOrder.IndexOf(g.Key) : 999))
+    {
+        <div class="category-section">
+            <h3 class="fw-bold category-title text-dark">@group.Key</h3>
+            <div class="row g-4">
+                @foreach (var item in group)
+                {
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card h-100 shadow-sm rounded-4 p-3 product-card">
+
+                            <div onclick="window.location.href='@Url.Action("Details", "Products", new { id = item.Id })'" style="cursor:pointer">
+                                <div class="text-center bg-light rounded-3 p-3 mb-3">
+                                    <img src="@item.ImgUrl" class="img-fluid" style="height: 180px; object-fit: contain;">
+                                </div>
+                                <h5 class="fw-bold text-dark">@item.Name</h5>
+                            </div>
+
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="h5 fw-bold text-primary mb-0">@item.Price.ToString("0.00") €</span>
+
+                                    <div class="d-flex align-items-center">
+                                        <span class="qty-label">Брой:</span>
+                                        <input type="number" id="qty-@item.Id" class="qty-input-simple" value="1" min="1" data-max-qty="@item.Quantity">
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm"
+                                        onclick="addToCartSimple(@item.Id)" id="btn-@item.Id">
+                                    <i class="bi bi-cart-plus me-2"></i>ДОБАВИ
+                                </button>
+
+                                @* --- АДМИНИСТРАТОРСКИ ПАНЕЛ --- *@
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <div class="admin-controls">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm w-50 rounded-pill">
+                                            <i class="bi bi-pencil-square"></i> Редакция
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm w-50 rounded-pill">
+                                            <i class="bi bi-trash"></i> Изтрий
+                                        </a>
+                                    </div>
+                                }
+                                @* ----------------------------- *@
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </div>
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        $(document).ready(function () {
-            $('.add-to-cart-btn').click(function () {
-                var btn = $(this);
-                var productId = btn.data('product-id');
+        function addToCartSimple(productId) {
+            const qtyInput = document.getElementById('qty-' + productId);
+            let qty = parseInt(qtyInput.value);
+            let maxQty = parseInt(qtyInput.getAttribute('data-max-qty')) || 999;
 
-                btn.prop('disabled', true).text('...');
+            if (isNaN(qty) || qty < 1) {
+                alert("Моля, въведете валидна бройка (минимум 1).");
+                qtyInput.value = 1;
+                return;
+            }
 
-                $.ajax({
-                    url: '/Orders/Create',
-                    type: 'POST',
-                    data: {
-                        productId: productId,
-                        quantity: 1,
-                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                    },
-                    success: function (response) {
-                        btn.text('✅').addClass('btn-success').removeClass('btn-primary');
-                        setTimeout(function() {
-                            btn.prop('disabled', false).html('<i class="bi bi-cart-plus"></i> Добави').addClass('btn-primary').removeClass('btn-success');
-                        }, 1500);
-                    },
-                    error: function () {
-                        alert('Грешка при добавянето.');
-                        btn.prop('disabled', false).text('Добави');
-                    }
-                });
+            if (qty > maxQty) {
+                alert("Няма достатъчна наличност! Максимално количество: " + maxQty);
+                qtyInput.value = maxQty;
+                return;
+            }
+
+            const btn = document.getElementById('btn-' + productId);
+            const originalHtml = btn.innerHTML;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            $.ajax({
+                url: '/Orders/AddToCart', // ФИКСИРАНО: Пренасочено към правилния екшън в контролера
+                type: 'POST',
+                data: {
+                    productId: productId,
+                    quantity: qty,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    btn.className = "btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm";
+                    btn.innerHTML = "✅ Добавено";
+
+                    setTimeout(() => {
+                        btn.className = "btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm";
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                        qtyInput.value = 1;
+
+                        // По желание: Ако искаш веднага да ги праща в количката, откоментирай долния ред:
+                        // window.location.href = '/Orders/Index';
+                    }, 1500);
+                },
+                error: function () {
+                    alert('Грешка при добавянето на продукта. Уверете се, че сте влезли в профила си.');
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
             });
-        });
+        }
     </script>
 }

@@ -1,87 +1,273 @@
 ﻿@model IEnumerable<SportnaSila.Models.Orders>
 
-<div class="container py-5">
+@{
+    ViewData["Title"] = User.IsInRole("Admin") ? "Управление на поръчки" : "Моята количка";
+    decimal totalSum = 0;
+}
+
+<div class="container my-5">
     @if (User.IsInRole("Admin"))
     {
-        @* --- ИЗГЛЕД ЗА АДМИН --- *@
-        <h1 class="fw-bold mb-4">Входящи поръчки (Админ)</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-dark m-0">📦 Управление на поръчки (Админ)</h2>
+            <span class="badge bg-warning text-dark fs-6 px-3 py-2 rounded-pill">Чакащи поръчки: @Model.Count()</span>
+        </div>
 
-        @foreach (var group in Model.GroupBy(o => o.ClientId))
+        @if (!Model.Any())
         {
-            var client = group.First().Client;
-            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-                <div class="card-header bg-dark text-white p-3 d-flex justify-content-between">
-                    <span><i class="bi bi-person-circle"></i> Клиент: <b>@client.UserName</b></span>
-                    <span class="badge bg-primary">@group.Count() позиции</span>
-                </div>
+            <div class="alert alert-success rounded-3 py-3 shadow-sm text-center">
+                <i class="bi bi-check2-all me-2 fs-5"></i> Няма нови чакащи поръчки за обработка!
+            </div>
+        }
+        else
+        {
+            <div class="card border-0 shadow-sm rounded-4 p-3">
                 <div class="table-responsive">
-                    <table class="table mb-0 align-middle">
+                    <table class="table align-middle mb-0 table-hover">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-4">Продукт</th>
-                                <th class="text-center">Количество</th>
-                                <th class="text-end pe-4">Цена</th>
+                                <th>Клиент (Email)</th>
+                                <th>Продукт</th>
+                                <th>Количество</th>
+                                <th>Обща цена</th>
+                                <th>Дата на поръчка</th>
+                                <th class="text-center">Действие</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in group)
+                            @foreach (var order in Model)
                             {
+                                var orderTotal = order.Product.Price * order.Quantity;
                                 <tr>
-                                    <td class="ps-4">@item.Product.Name</td>
-                                    <td class="text-center">@item.Quantity бр.</td>
-                                    <td class="text-end pe-4 fw-bold">@(item.Product.Price* item.Quantity) €</td>
+                                    <td>
+                                        <div class="fw-bold text-dark">@order.Client?.FirstName</div>
+                                        <div class="text-muted small">@order.Client?.Email</div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            @if (!string.IsNullOrEmpty(order.Product.ImgUrl))
+                                            {
+                                                <img src="@order.Product.ImgUrl" class="rounded-3 me-2" style="width: 45px; height: 45px; object-fit: contain;" />
+                                            }
+                                            <span class="fw-semibold">@order.Product.Name</span>
+                                        </div>
+                                    </td>
+                                    <td class="fw-bold text-center">@order.Quantity бр.</td>
+                                    <td class="text-primary fw-bold">@orderTotal.ToString("F2") €</td>
+                                    <td class="text-muted small">@order.DateOrder.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td class="text-center">
+                                        <form asp-action="CompleteOrder" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="clientId" value="@order.ClientId" />
+                                            <button type="submit" class="btn btn-success rounded-pill px-4 btn-sm fw-bold shadow-sm">
+                                                <i class="bi bi-check-lg me-1"></i> Потвърди поръчката
+                                            </button>
+                                        </form>
+                                    </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
-                </div>
-                <div class="card-footer bg-white p-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold">Общо: @group.Sum(x => x.Product.Price * x.Quantity).ToString("0.00") €</h5>
-                    <form asp-action="CompleteOrder" asp-route-clientId="@group.Key" method="post">
-                        <button type="submit" class="btn btn-success rounded-pill px-4" onclick="return confirm('Завършване на поръчката?')">
-                            ЗАВЪРШИ ПОРЪЧКАТА
-                        </button>
-                    </form>
                 </div>
             </div>
         }
     }
     else
     {
-        @* --- ИЗГЛЕД ЗА КЛИЕНТ (КОЛИЧКА) --- *@
-        <h1 class="fw-bold mb-4">Моята количка</h1>
+        <h2 class="mb-4 fw-bold text-dark">Моята количка</h2>
 
-        <div class="row">
-            <div class="col-lg-8">
-                @foreach (var item in Model)
-                {
-                    <div class="card border-0 shadow-sm rounded-4 mb-3 p-3">
-                        <div class="row align-items-center">
-                            <div class="col-2"><img src="@item.Product.ImgUrl" class="img-fluid rounded-3" style="max-height: 80px;"></div>
-                            <div class="col-6">
-                                <h5 class="fw-bold mb-1">@item.Product.Name</h5>
-                                <p class="text-muted mb-0">@item.Quantity бр. x @item.Product.Price €</p>
-                            </div>
-                            <div class="col-4 text-end">
-                                <div class="h5 fw-bold" style="color: #ff4d05;">@(item.Product.Price* item.Quantity) €</div>
-                                <form asp-action="Delete" asp-route-id="@item.Id" method="post">
-                                    <button type="submit" class="btn text-danger btn-sm p-0 border-0">Премахни</button>
-                                </form>
-                            </div>
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info rounded-3 py-3 shadow-sm">
+                Количката ви е празна. <a href="/Products" class="alert-link">Вижте продуктите ни тук.</a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                <div class="col-lg-8" id="cartItemsSection">
+                    <div class="card border-0 shadow-sm rounded-4 p-3">
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Продукт</th>
+                                        <th>Цена</th>
+                                        <th>Количество</th>
+                                        <th>Общо</th>
+                                        <th>Действие</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        var itemTotal = item.Product.Price * item.Quantity;
+                                        totalSum += itemTotal;
+
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(item.Product.ImgUrl))
+                                                    {
+                                                        <img src="@item.Product.ImgUrl" class="rounded-3 me-3" style="width: 60px; height: 60px; object-fit: contain;" />
+                                                    }
+                                                    <div>
+                                                        <h6 class="mb-0 fw-bold">@item.Product.Name</h6>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@item.Product.Price.ToString("F2") €</td>
+                                            <td>@item.Quantity</td>
+                                            <td>@itemTotal.ToString("F2") €</td>
+                                            <td>
+                                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">Изтрий</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                }
-            </div>
-            <div class="col-lg-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4">
-                    <h4 class="fw-bold mb-3">Детайли</h4>
-                    <div class="d-flex justify-content-between border-top pt-3">
-                        <span class="h5">Обща сума:</span>
-                        <span class="h5 fw-bold" style="color: #ff4d05;">@Model.Sum(o => o.Product.Price * o.Quantity).ToString("0.00") €</span>
-                    </div>
-                    <button class="btn btn-lg w-100 rounded-3 mt-4 text-white fw-bold" style="background-color: #ff4d05;">ЗАВЪРШИ ПОРЪЧКАТА</button>
                 </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 mb-3" id="detailsSection">
+                        <h4 class="mb-4 fw-bold">Детайли</h4>
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="text-secondary">Обща сума:</span>
+                            <h4 class="text-primary fw-bold mb-0">@totalSum.ToString("F2") €</h4>
+                        </div>
+                        <button id="btnShowCheckout" class="btn btn-warning btn-lg w-100 rounded-pill text-white fw-bold shadow-sm">ЗАВЪРШИ ПОРЪЧКАТА</button>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4 p-4 d-none" id="checkoutSection">
+                        <h4 class="mb-4 fw-bold">Данни за доставка</h4>
+                        <form id="checkoutForm">
+                            @Html.AntiForgeryToken()
+                            <div class="mb-3">
+                                <label class="form-label text-secondary">Име и Фамилия</label>
+                                <input type="text" id="fullName" class="form-control rounded-3" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-secondary">Град</label>
+                                <input type="text" id="city" class="form-control rounded-3" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-secondary">Тип доставка</label>
+                                <select id="deliveryType" class="form-select rounded-3">
+                                    <option value="CourierOffice">До офис на куриер</option>
+                                    <option value="CourierAddress">До личен / служебен адрес</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-secondary">Куриерска фирма</label>
+                                <select id="courier" class="form-select rounded-3">
+                                    <option value="Econt">Еконт</option>
+                                    <option value="Speedy">Спиди</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label id="addressLabel" class="form-label text-secondary">Адрес на куриерски офис за доставка:</label>
+                                <input type="text" id="deliveryAddress" class="form-control rounded-3" placeholder="Въведете град и име/адрес на желания офис" required />
+                            </div>
+
+                            <button type="submit" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-sm mb-2">ПОТВЪРДИ ПОРЪЧКАТА</button>
+                            <button type="button" id="btnCancelCheckout" class="btn btn-outline-secondary w-100 rounded-pill">Назад</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div id="successSection" class="text-center py-5 d-none">
+            <div class="card border-0 shadow-sm rounded-4 p-5 bg-white d-inline-block" style="max-width: 500px;">
+                <i class="bi bi-check-circle-fill text-success mb-4" style="font-size: 4rem;"></i>
+                <h1 class="fw-bold text-dark mb-2">Благодарим ви!</h1>
+                <h4 class="text-secondary mb-4">Поръчката ви е приета успешно.</h4>
+                <a href="/Products" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm">Назад към продуктите</a>
             </div>
         </div>
     }
 </div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const btnShowCheckout = document.getElementById('btnShowCheckout');
+            const btnCancelCheckout = document.getElementById('btnCancelCheckout');
+            const detailsSection = document.getElementById('detailsSection');
+            const checkoutSection = document.getElementById('checkoutSection');
+            const cartItemsSection = document.getElementById('cartItemsSection');
+            const successSection = document.getElementById('successSection');
+
+            if (btnShowCheckout) {
+                btnShowCheckout.addEventListener('click', function () {
+                    if (detailsSection) detailsSection.classList.add('d-none');
+                    if (checkoutSection) checkoutSection.classList.remove('d-none');
+                });
+            }
+
+            if (btnCancelCheckout) {
+                btnCancelCheckout.addEventListener('click', function () {
+                    if (checkoutSection) checkoutSection.classList.add('d-none');
+                    if (detailsSection) detailsSection.classList.remove('d-none');
+                });
+            }
+
+            const deliveryType = document.getElementById('deliveryType');
+            if (deliveryType) {
+                deliveryType.addEventListener('change', function () {
+                    const label = document.getElementById('addressLabel');
+                    const input = document.getElementById('deliveryAddress');
+                    if (label && input) {
+                        if (this.value === 'CourierOffice') {
+                            label.innerText = 'Адрес на куриерски офис за доставка:';
+                            input.placeholder = 'Въведете град и име/адрес на желания офис';
+                        } else {
+                            label.innerText = 'Личен / служебен адрес за доставка:';
+                            input.placeholder = 'Въведете град, квартал, улица и номер/блок';
+                        }
+                    }
+                });
+            }
+
+            const checkoutForm = document.getElementById('checkoutForm');
+            if (checkoutForm) {
+                checkoutForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                    $.ajax({
+                        url: '/Orders/Checkout',
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: token,
+                            fullName: document.getElementById('fullName').value,
+                            city: document.getElementById('city').value,
+                            courier: document.getElementById('courier').value,
+                            deliveryType: document.getElementById('deliveryType').value,
+                            deliveryAddress: document.getElementById('deliveryAddress').value
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                if (cartItemsSection) cartItemsSection.classList.add('d-none');
+                                if (checkoutSection) checkoutSection.classList.add('d-none');
+                                if (detailsSection) detailsSection.classList.add('d-none');
+                                if (successSection) successSection.classList.remove('d-none');
+                            } else {
+                                alert(response.message || 'Грешка при обработка на поръчката.');
+                            }
+                        },
+                        error: function () {
+                            alert('Възникна системна грешка. Моля, опитайте отново.');
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+}

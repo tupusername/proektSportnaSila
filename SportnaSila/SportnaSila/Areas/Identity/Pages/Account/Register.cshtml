@@ -4,50 +4,133 @@
     ViewData["Title"] = "Регистрация";
 }
 
-<section class="auth-section">
+@* Стилизация директно за тази страница, за да пасне на тъмния фон от снимката *@
+<style>
+    body {
+        background-color: #1b263b; /* Тъмносиният фон от твоята снимка */
+    }
+
+    .auth-card {
+        background: white;
+        border-radius: 2rem;
+        padding: 3rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        max-width: 700px;
+        width: 100%;
+    }
+
+    .form-control-custom {
+        background-color: #f0f2f5; /* Светлосивото от картинката */
+        border: 1px solid #e0e0e0;
+        border-radius: 0.8rem;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+
+        .form-control-custom:focus {
+            background-color: #ffffff;
+            border-color: #22c55e;
+            box-shadow: none;
+        }
+
+    .btn-green {
+        background-color: #22c55e; /* Зеленото от твоя бутон "Влез" */
+        color: white;
+        border: none;
+        border-radius: 0.8rem;
+        padding: 0.8rem;
+        font-weight: bold;
+        font-size: 1.1rem;
+        transition: 0.3s;
+    }
+
+        .btn-green:hover {
+            background-color: #1a9d4b;
+            color: white;
+        }
+
+    .auth-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+</style>
+
+<div class="container py-5 d-flex justify-content-center align-items-center" style="min-height: 90vh;">
     <div class="auth-card">
-        <h1 class="auth-title">Регистрация</h1>
-        <p class="auth-subtitle">Създай нов акаунт в SportnaSila</p>
+
+        @* Заглавие идентично с Входа *@
+        <div class="text-center mb-4">
+            <h1 class="fw-bold" style="font-size: 2.5rem; color: #1b263b;">Регистрация</h1>
+            <p class="text-muted">Създай нов акаунт в SportnaSila</p>
+        </div>
 
         <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
 
+            @* UserName - на цял ред *@
             <div class="mb-3">
-                <label asp-for="Input.UserName" class="form-label"></label>
-                <input asp-for="Input.UserName" class="form-control" autocomplete="username" aria-required="true" placeholder="Въведи потребителско име" />
-                <span asp-validation-for="Input.UserName" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Input.Email" class="form-label"></label>
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="Въведи имейл" />
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
+                <label asp-for="Input.UserName" class="auth-label">UserName</label>
+                <input asp-for="Input.UserName" class="form-control form-control-custom" placeholder="Въведи потребителско име" />
+                <span asp-validation-for="Input.UserName" class="text-danger small"></span>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Input.Password" class="form-label"></label>
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Въведи парола" />
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            @* Име и Фамилия - в две колони *@
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.FirstName" class="auth-label">FirstName</label>
+                    <input asp-for="Input.FirstName" class="form-control form-control-custom" placeholder="Въведи име" />
+                    <span asp-validation-for="Input.FirstName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.LastName" class="auth-label">LastName</label>
+                    <input asp-for="Input.LastName" class="form-control form-control-custom" placeholder="Въведи фамилия" />
+                    <span asp-validation-for="Input.LastName" class="text-danger small"></span>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Input.ConfirmPassword" class="form-label"></label>
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Повтори паролата" />
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            @* Имейл и Телефон *@
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Email" class="auth-label">Email</label>
+                    <input asp-for="Input.Email" class="form-control form-control-custom" placeholder="Въведи имейл" />
+                    <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.PhoneNumber" class="auth-label">PhoneNumber</label>
+                    <input asp-for="Input.PhoneNumber" class="form-control form-control-custom" placeholder="Въведи телефон" />
+                    <span asp-validation-for="Input.PhoneNumber" class="text-danger small"></span>
+                </div>
             </div>
 
-            <button id="registerSubmit" type="submit" class="auth-btn">Създай акаунт</button>
+            @* Парола и Потвърждение *@
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Password" class="auth-label">Password</label>
+                    <input asp-for="Input.Password" type="password" class="form-control form-control-custom" placeholder="Въведи парола" />
+                    <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <label asp-for="Input.ConfirmPassword" class="auth-label">Confirm Password</label>
+                    <input asp-for="Input.ConfirmPassword" type="password" class="form-control form-control-custom" placeholder="Повтори парола" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                </div>
+            </div>
 
-            <div class="auth-divider"></div>
+            @* Зеленият бутон *@
+            <button id="registerSubmit" type="submit" class="btn btn-green w-100 shadow-sm">Регистрация</button>
 
-            <div class="auth-links">
-                <p class="mb-0">
+            <div class="mt-4 text-center">
+                <p class="text-muted small m-0">
                     Вече имаш профил?
-                    <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Влез</a>
+                    <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="fw-bold text-decoration-none" style="color: #22c55e;">Влез оттук</a>
                 </p>
             </div>
         </form>
     </div>
-</section>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SportnaSila.Data;
 using SportnaSila.Models;
+using System.Security.Claims;
 
 namespace SportnaSila.Controllers
 {
@@ -23,53 +20,39 @@ namespace SportnaSila.Controllers
             _userManager = userManager;
         }
 
-        // GET: Orders - Показва количката или админ панела
+        // 1. ИНДЕКС - Количка на потребителя или списък за Админа
         public async Task<IActionResult> Index()
         {
-            var userId = _userManager.GetUserId(User);
-            var query = _context.Orders.Include(o => o.Product).Include(o => o.Client);
-
             if (User.IsInRole("Admin"))
             {
-                // Админът вижда финализираните поръчки
-                var adminOrders = await query
-                    .Where(o => o.Status == "Completed")
-                    .OrderByDescending(o => o.DateOrder)
+                var adminOrders = await _context.Orders
+                    .Include(o => o.Product)
+                    .Include(o => o.Client)
+                    .Where(o => o.Status == "Pending")
                     .ToListAsync();
+
                 return View(adminOrders);
             }
-            else
-            {
-                // КЛИЕНТ: Стакваме визуално (групираме еднаквите продукти в една карта)
-                var userCart = await query
-                    .Where(o => o.ClientId == userId && o.Status == "Cart")
-                    .GroupBy(o => o.ProductId)
-                    .Select(g => new Orders
-                    {
-                        Id = g.First().Id,
-                        ProductId = g.Key,
-                        ClientId = userId,
-                        Status = "Cart",
-                        Quantity = g.Sum(x => x.Quantity), // Тук става 1+1=2
-                        Product = g.First().Product,
-                        Client = g.First().Client
-                    })
-                    .ToListAsync();
 
-                return View(userCart);
-            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var clientCart = await _context.Orders
+                .Include(o => o.Product)
+                .Where(o => o.ClientId == userId && o.Status == "Cart")
+                .ToListAsync();
+
+            return View(clientCart);
         }
 
-        // AJAX POST: Добавяне в количка без презареждане
+        // 2. ДОБАВЯНЕ В КОЛИЧКАТА
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(int productId, int quantity = 1)
+        public async Task<IActionResult> AddToCart(int productId, int quantity)
         {
-            var userId = _userManager.GetUserId(User);
-            if (userId == null) return Json(new { success = false, message = "Влезте в профила си." });
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (quantity <= 0) quantity = 1;
 
             var existingOrder = await _context.Orders
-                .FirstOrDefaultAsync(o => o.ProductId == productId && o.ClientId == userId && o.Status == "Cart");
+                .FirstOrDefaultAsync(o => o.ClientId == userId && o.ProductId == productId && o.Status == "Cart");
 
             if (existingOrder != null)
             {
@@ -78,26 +61,46 @@ namespace SportnaSila.Controllers
             }
             else
             {
-                _context.Add(new Orders { ProductId = productId, ClientId = userId, Quantity = quantity, Status = "Cart", DateOrder = DateTime.Now });
+                var newOrder = new Orders
+                {
+                    ClientId = userId,
+                    ProductId = productId,
+                    Quantity = quantity,
+                    Status = "Cart",
+                };
+                _context.Add(newOrder);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index", "Orders");
+        }
+
+        // 3. АЯКС CHECKOUT (ПОРЪЧВАНЕ)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Checkout(string fullName, string city, string courier, string deliveryType, string deliveryAddress)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var cartItems = await _context.Orders
+                .Where(o => o.ClientId == userId && o.Status == "Cart")
+                .ToListAsync();
+
+            if (cartItems == null || !cartItems.Any())
+            {
+                return Json(new { success = false, message = "Количката ви е празна!" });
+            }
+
+            foreach (var item in cartItems)
+            {
+                item.Status = "Pending";
             }
 
             await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
 
-        // POST: Админът завършва и премахва поръчката от списъка
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CompleteOrder(string clientId)
-        {
-            if (!User.IsInRole("Admin")) return Forbid();
-            var items = _context.Orders.Where(o => o.ClientId == clientId && o.Status == "Completed");
-            _context.Orders.RemoveRange(items);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        // POST: Премахване на продукт от количката
+        // 4. ПРЕМАХВАНЕ НА ПРОДУКТ ОТ КОЛИЧКАТА
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -105,10 +108,27 @@ namespace SportnaSila.Controllers
             var order = await _context.Orders.FindAsync(id);
             if (order != null)
             {
-                var allSame = _context.Orders.Where(o => o.ProductId == order.ProductId && o.ClientId == order.ClientId && o.Status == "Cart");
-                _context.Orders.RemoveRange(allSame);
+                _context.Orders.Remove(order);
                 await _context.SaveChangesAsync();
             }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // 5. АДМИН: ЗАВЪРШВАНЕ НА ПОРЪЧКА
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CompleteOrder(string clientId)
+        {
+            var clientOrders = await _context.Orders
+                .Where(o => o.ClientId == clientId && o.Status == "Pending")
+                .ToListAsync();
+
+            foreach (var order in clientOrders)
+            {
+                order.Status = "Completed";
+            }
+
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
     }
